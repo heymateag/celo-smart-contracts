@@ -1,3 +1,14 @@
+**Steps to run the smart contract**
+1. truffle compile
+2. truffle migrate --reset --network={name of the network}
+   Eg: truffle migrate --reset --network test
+
+   Refer **truffle-config.js** file for different network configuration.
+
+*Documention: https://docs.celo.org/developer-guide/start/hellocontracts*
+
+---
+
 **Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
 
 When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
