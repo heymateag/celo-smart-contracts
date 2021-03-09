@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: RAN
-pragma solidity >=0.4.22 <0.9.0;
+// pragma solidity >=0.4.22 <0.9.0;
 
-// pragma solidity ^0.7.4;
+pragma solidity ^0.7.4;
 
 contract HeymateEscrows {
     address public owner;
+    address public serviceProvider;
+    address public consumer;
     bytes32 public tradeHash;
     uint256 public cancellationValueDeposit;
     uint256 public delayCompensation;
@@ -47,8 +49,11 @@ contract HeymateEscrows {
         _;
     }
     
-    constructor() public {
+    constructor() {
         owner = msg.sender;
+        serviceProvider = msg.sender;
+        consumer = msg.sender;
+            
     }
     
     // Get the offer details
@@ -79,7 +84,8 @@ contract HeymateEscrows {
       uint32 _cancelHourVar2,
       uint16 _cancelHourVar2Percen,
       uint16 _delayHour,
-      uint16 _delayHourPercen
+      uint16 _delayHourPercen,
+      bytes memory signature
       
     ) payable external  {
         bytes32 _tradeHash = keccak256(abi.encodePacked(_tradeID, _serviceProvider, _consumer, _amount, _fee));
@@ -88,6 +94,12 @@ contract HeymateEscrows {
         uint32 tradeStartTime = uint32(block.timestamp);
         require(msg.value == _amount && msg.value > 0, "Amount send should be equal to the signed value and should be greater than Zero"); // Check sent eth against signed _value and make sure is not 0
         
+        require(msg.sender == _consumer, "Not consumer");
+         // this recreates the message that was signed on the client
+        bytes32 message = prefixed(_tradeHash);
+
+        require(recoverSigner(message, signature) == owner); // Signature verification
+
         if (_cancelHourVar1 > 0){
           _cancelHourVar1 = tradeStartTime +  _cancelHourVar1 * 60 * 60;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
         }
@@ -112,17 +124,59 @@ contract HeymateEscrows {
             offers[_tradeHash].remainingValue = _amount - offers[_tradeHash].initialDepositValue;
             offers[_tradeHash].currentState = State.INITIAL_PAYMENT_RECEIVED;
             
-            transferMinusFees(_serviceProvider, offers[_tradeHash].initialDepositValue , _fee);
+            // transferMinusFees(_serviceProvider, offers[_tradeHash].initialDepositValue , _fee);
          }
          
         emit Created(_tradeHash);
     }
+
+     // Creates the hash.
+    function prefixed(bytes32 hash) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+    }
     
+    function recoverSigner(bytes32 message, bytes memory sig)
+        internal
+        pure
+        returns (address)
+    {
+        (uint8 v, bytes32 r, bytes32 s) = splitSignature(sig);
+
+        return ecrecover(message, v, r, s);
+    }
     
+      //signature methods.
+    function splitSignature(bytes memory sig)
+        internal
+        pure
+        returns (uint8 v, bytes32 r, bytes32 s)
+    {
+        require(sig.length == 65);
+
+        assembly {
+            // first 32 bytes, after the length prefix.
+            r := mload(add(sig, 32))
+            // second 32 bytes.
+            s := mload(add(sig, 64))
+            // final byte (first byte of the next 32 bytes).
+            v := byte(0, mload(add(sig, 96)))
+        }
+
+        return (v, r, s);
+    }
+       
     function getInitialDeposit(uint256 _amount, uint256 _initialDeposit) private pure returns (uint256) {
          uint256 _initialDepositValue =  (_amount * _initialDeposit / 100);
             return _initialDepositValue;
     }
+
+    //  function sendInitialDeposit(address payable _serviceProvider, uint256 _amount, uint256 _initialDeposit, uint16 _fee, bytes32 _tradeHash) private returns (uint256) {
+    //     //  uint256 _initialDepositValue =  (_amount * _initialDeposit / 100);
+    //     offers[_tradeHash].initialDepositValue =  (_amount * _initialDeposit / 100);
+    //     offers[_tradeHash].remainingValue = _amount - offers[_tradeHash].initialDepositValue;
+    //     offers[_tradeHash].currentState = State.INITIAL_PAYMENT_RECEIVED;
+    //     transferMinusFees(_serviceProvider, offers[_tradeHash].initialDepositValue , _fee);
+    // }
    
     // Start service function. Only SP can start the service.
      function dostartService(

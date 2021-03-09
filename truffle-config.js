@@ -12,5 +12,10 @@ module.exports = {
       port: 8545,
       network_id: 44787
     }
+  },
+  compilers: {
+    solc: {
+      version: "0.7.4",
+    }
   }
 };
