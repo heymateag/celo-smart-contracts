@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: HEYMATE
-// Last updated : 14th May 2021
+// Deployed Address on 16th May 2021 - 0xD82Ef810E1AB8873699632e7Eced16ef665CF257    
 
 pragma solidity ^0.7.4;
 
@@ -84,8 +84,8 @@ contract HeymateOffer {
     }
 
     // Celo deployed contract address for Escrow and StableToken
-    address stableTokenAddress = 0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1;
-    address celoEscrowContractAddress = 0xb07E10c5837c282209c6B9B3DE0eDBeF16319a37;
+    address stableTokenAddress = 0x765DE816845861e75A25fCA122bb6898B8B1282a;
+    address celoEscrowContractAddress = 0xf4Fa51472Ca8d72AF678975D9F8795A504E7ada5;
     
     // Escrow transfer for non-heymate users.
     function escrowTransfer(
@@ -238,7 +238,7 @@ contract HeymateOffer {
             approveTransfer(celoEscrowContractAddress, _rewardPerReferrer * newReferrers.length );
              for (uint i=0; i< newReferrers.length ; i++){
                  escrowTransfer('0x0',
-                    0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1,    // Stable Token address
+                    0x765DE816845861e75A25fCA122bb6898B8B1282a,    // Stable Token address
                     _rewardPerReferrer,
                     604800,                     // 7 days in seconds
                     newReferrers[i],
