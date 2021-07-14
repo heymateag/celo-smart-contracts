@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: HEYMATE 1st June 2021 - 0xeA49908f5083Ab6684d85256E097Abd0440Bd189
-
+// SPDX-License-Identifier: HEYMATE 14th July 2021 : 0x0B9080095D5f4660808acE315320e525c5d97812
+// Bugfix on release amount for SP.
 pragma solidity ^0.7.4;
 
 /**
@@ -333,6 +333,7 @@ contract HeymateOffer {
         );
 
         tradeHash = _tradeHash;
+        offers[_tradeHash].remainingValue =  offerinfo._amount;
 
         if (_initialDeposit > 0) {
             offers[_tradeHash].initialDepositValue = getInitialDeposit(
@@ -465,7 +466,7 @@ contract HeymateOffer {
 
         if (!_offer.exists) return false;
 
-        uint256 _delayCompensationValue;
+        uint256 _delayCompensationValue = 0;
         if (
             offers[_tradeHash].serviceStartTime >
             offers[_tradeHash].slotTime + offers[_tradeHash].delayHour
