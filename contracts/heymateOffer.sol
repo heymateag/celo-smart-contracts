@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: HEYMATE
-// Deployed Address on 31st May 2021 - 0x7C75b8FF4Efa13190a062723159b21a1460d291B
-// Updated with Pricing plans - Bundles and Sunscriptions // 31st May    
+// Deployed Address on 14th July 2021 - 0xfE471f3d98417603461E243425065fB0EFd5Ae3C
+// Bugfix for release amount // 14th July    
 
 // SPDX-License-Identifier: HEYMATE
 
@@ -328,7 +328,7 @@ contract HeymateOffer {
         );
 
         tradeHash = _tradeHash;
-
+         offers[_tradeHash].remainingValue =  offerinfo._amount;
         if (_initialDeposit > 0) {
             offers[_tradeHash].initialDepositValue = getInitialDeposit(
                 offerinfo._amount,
@@ -398,7 +398,7 @@ contract HeymateOffer {
         return _initialDepositValue;
     }
     
-       // Get the plan details
+       // Get the plan details  
     function getPlanAndHash(
         bytes16 _planID,
         address _serviceProvider,
@@ -459,8 +459,8 @@ contract HeymateOffer {
             );
 
         if (!_offer.exists) return false;
-
-        uint256 _delayCompensationValue;
+// Check this 
+        uint256 _delayCompensationValue = 0;
         if (
             offers[_tradeHash].serviceStartTime >
             offers[_tradeHash].slotTime + offers[_tradeHash].delayHour
@@ -695,7 +695,7 @@ contract HeymateOffer {
         totalFees = _totalFees;
         if (_amount - _totalFees > _amount) return; // Prevent underflow
         feesAvailableForWithdraw += _totalFees;
-        // _to.transfer(_amount - _totalFees);
+   // _to.transfer(_amount - _totalFees);
         transferAmount(
               _to,
               (_amount - _totalFees)
