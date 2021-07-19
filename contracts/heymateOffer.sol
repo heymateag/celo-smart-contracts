@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: HEYMATE
-// Deployed Address on 14th July 2021 - 0xfE471f3d98417603461E243425065fB0EFd5Ae3C
-// Bugfix for release amount // 14th July    
+// Deployed Address on 14th July 2021 - 0x361502b8138Dbaf5819401923f9446Fc01200C62
+// Fixed the referrer error and tested // 19th July    
 
 // SPDX-License-Identifier: HEYMATE
 
@@ -242,7 +242,7 @@ contract HeymateOffer {
         require(block.timestamp < _expiry, "Offer expired!");
         uint32 tradeStartTime = uint32(block.timestamp);
         uint256 _rewardValue;
-        uint256 _rewardPerReferrer;
+        uint256 _rewardPerReferrer =0;
         
         offerInfo memory offerinfo;
         offerinfo._amount = _amount;
@@ -286,8 +286,9 @@ contract HeymateOffer {
                 _rewardValue = offerinfo._amount * config[7] / 100;
                 offerinfo._amount = offerinfo._amount - _rewardValue;
                 
-                uint totalReferrers = activeReferrers.length + newReferrers.length;
-                _rewardPerReferrer = _rewardValue / totalReferrers;
+                uint totalReferrers = activeReferrers.length + newReferrers.length;             
+                if(totalReferrers > 0)
+                    _rewardPerReferrer = _rewardValue / totalReferrers;
             }
         }
         
@@ -459,7 +460,6 @@ contract HeymateOffer {
             );
 
         if (!_offer.exists) return false;
-// Check this 
         uint256 _delayCompensationValue = 0;
         if (
             offers[_tradeHash].serviceStartTime >
