@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: HEYMATE 14th July 2021 : 0x0B9080095D5f4660808acE315320e525c5d97812
-// Bugfix on release amount for SP.
+// SPDX-License-Identifier: HEYMATE 19th July 2021
+// Referrer issue updated. Line 247, 293
+
 pragma solidity ^0.7.4;
 
 /**
@@ -243,8 +244,8 @@ contract HeymateOffer {
         require(block.timestamp < _expiry, "Offer expired!");
         uint32 tradeStartTime = uint32(block.timestamp);
         uint256 _rewardValue;
-        uint256 _rewardPerReferrer;
-        
+        uint256 _rewardPerReferrer = 0;
+
         offerInfo memory offerinfo;
         offerinfo._amount = _amount;
         offerinfo._planID = _planID;
@@ -289,9 +290,7 @@ contract HeymateOffer {
                 offerinfo._amount = offerinfo._amount - _rewardValue;
     
                      uint totalReferrers = activeReferrers.length + newReferrers.length;
-                     if(totalReferrers == 0)
-                        _rewardPerReferrer = 0;
-                     else 
+                       if(totalReferrers > 0)
                       _rewardPerReferrer = _rewardValue / totalReferrers;
             }
         }
