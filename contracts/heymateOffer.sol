@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: HEYMATE
 /**
-3rd August 2021 - Alfajores
-Updated the contract with currencyId (cUSD/cEUR) for all the transactions. Deployed using truffle configurations.
-contractAddress: '0xb6af427720304facF44463e263083004624b614B',
+5th August 2021 - Alfajores
+Updated the contract by passing the stable token address instead of currencyId for all the transactions. Deployed using truffle configurations.
+contractAddress: '0x54fB1CE9Fb9148860a07A2160b2F250D915930Fd',
 transactionHash:
-   '0x19007d681ac1138ab8e0f053be99db6969cb4a3ce59a86263f797d249d1a0883',
+   '0xe7be88c6b3a8a75753d22ed5ae1bae0880da9122a9d3de64fe1bee4de21fc7bd',
  from: '0x4574dab9079fc3ad3069df22e72962449eec3970'
 
  */
@@ -78,7 +78,7 @@ contract HeymateOffer {
         uint32 delayHour;
         uint32 delayHourPercen;
         uint256 rewardValue;
-        uint32 currencyId;
+        address tokenAddress;
     }
 
     struct offerInfo {
@@ -95,7 +95,7 @@ contract HeymateOffer {
         uint subScriptionType;
         uint totalBundles;
         uint availableBundles;
-        uint32 currencyId;
+        address tokenAddress;
     }
  
     // Mapping of active trades. Key is a hash of the trade data
@@ -162,14 +162,8 @@ contract HeymateOffer {
     }
     
     // Celo contract to transfer tokens
-     function transferAmount(address  to, uint256 value, uint32 currencyId) public returns (bool) {
-        address celoStableTokenAddress;
-        if (currencyId == 1) { // cUSD
-             celoStableTokenAddress = cUSDTokenAddress;
-        } else if (currencyId == 2) { // cEUR
-            celoStableTokenAddress = cEURTokenAddress;
-        }
-        celoStableTokenContract obj = celoStableTokenContract(celoStableTokenAddress);
+     function transferAmount(address  to, uint256 value, address tokenAddress) public returns (bool) {
+        celoStableTokenContract obj = celoStableTokenContract(tokenAddress);
               return obj.transfer(
                 to,
                 value
@@ -189,13 +183,15 @@ contract HeymateOffer {
     // Creating Plans 
 
     /**
-    config[0] - _amountPerSession
-    config[1] - _subScriptionType     // 1- Monthly , 2 - Yearly
-    config[2] - _totalBundles
-    config[3] - _referralConfigId 
-    config[4] - _referrerPercen  
-    config[5] - currencyId           // 1 -cUSD , 2 -cEUR
-     */
+    config[0]       - _amountPerSession
+    config[1]       - _subScriptionType     // 1- Monthly , 2 - Yearly
+    config[2]       - _totalBundles
+    config[3]       - _referralConfigId 
+    config[4]       - _referrerPercen  
+    userAddress[0]  - Service Provider address
+    userAddress[0]  - Consumer address
+    userAddress[0]  - Stable token address
+         */
      
     
     function createPlan(
@@ -218,7 +214,7 @@ contract HeymateOffer {
             config[1],      // subScriptionType
             config[2] ,     // totalBundles
             config[2],      // availableBundles
-            config[5]);     // currencyId
+            userAddress[2]);     // currency token address
         planHash = _planHash;
         emit CreatedPlan(_planHash);
         
@@ -229,6 +225,7 @@ contract HeymateOffer {
     /**
      * userAddress[0]       - Service provider
      * userAddress[1]       - Consumer
+     * userAddress[2]       - Stable token address
      * config[0]            - _cancelHourVar1
      * config[1]            - _cancelHourVar1Percen
      * config[2]            - _cancelHourVar2
@@ -237,7 +234,6 @@ contract HeymateOffer {
      * config[5]            - _delayHourPercen
      * config[6]            - _referralConfigId , 1 - FirstInteraction , 2 -> Last interaction . 3-> Last No-Direct click 4 -> Linear
      * config[7]            - _referralConfigPercen
-     * config[8]            - currencyID , 1 - cUSD , 2 - cEUR
      *
      **/
 
@@ -326,7 +322,7 @@ contract HeymateOffer {
        // @param config[8] - currencyID
         if(activeReferrers.length > 0){
             for (uint i=0; i< activeReferrers.length ; i++){
-                 transferAmount(activeReferrers[i], _rewardPerReferrer, config[8]);
+                 transferAmount(activeReferrers[i], _rewardPerReferrer, userAddress[2]);
             }
         }
         
@@ -358,7 +354,7 @@ contract HeymateOffer {
             config[4],          // delayHour
             config[5],          // delayHour percentage
             _rewardValue,       
-            config[8]           // currencyID    
+            userAddress[2]           // currency token address 
         );
 
         tradeHash = _tradeHash;
@@ -375,7 +371,7 @@ contract HeymateOffer {
              transferAmount(
               userAddress[0],
               offers[_tradeHash].initialDepositValue,
-              offers[_tradeHash].currencyId
+              offers[_tradeHash].tokenAddress
               );
         }
 
@@ -502,7 +498,7 @@ contract HeymateOffer {
             _delayCompensationValue = ((_amount *
                 offers[_tradeHash].delayHourPercen) / 100);
             delayCompensation = _delayCompensationValue;
-            transferMinusFees(_consumer, _delayCompensationValue, _fee, offers[_tradeHash].currencyId);
+            transferMinusFees(_consumer, _delayCompensationValue, _fee, offers[_tradeHash].tokenAddress);
         }
 
         uint256 _releaseAmount =
@@ -510,7 +506,7 @@ contract HeymateOffer {
         releaseAmount = _releaseAmount;
 
         emit Released(_tradeHash);
-        transferMinusFees(_serviceProvider, _releaseAmount, _fee, offers[_tradeHash].currencyId);
+        transferMinusFees(_serviceProvider, _releaseAmount, _fee, offers[_tradeHash].tokenAddress);
         delete offers[_tradeHash];
         return true;
     }
@@ -535,7 +531,7 @@ contract HeymateOffer {
         if (!_offer.exists) return false;
         emit CancelledByServiceProvider(_tradeHash);
         releaseAmount = offers[_tradeHash].remainingValue;
-        transferMinusFees(_consumer, offers[_tradeHash].remainingValue, _fee, offers[_tradeHash].currencyId);
+        transferMinusFees(_consumer, offers[_tradeHash].remainingValue, _fee, offers[_tradeHash].tokenAddress);
         delete offers[_tradeHash];
         return true;
     }
@@ -573,7 +569,7 @@ contract HeymateOffer {
                 _serviceProvider,
                 _cancellationValueDeposit,
                 _fee,
-                offers[_tradeHash].currencyId
+                offers[_tradeHash].tokenAddress
             );
         } else if (
             cancelTime > offers[_tradeHash].cancelHourVar1 &&
@@ -588,7 +584,7 @@ contract HeymateOffer {
                 _serviceProvider,
                 _cancellationValueDeposit,
                 _fee,
-                offers[_tradeHash].currencyId
+                offers[_tradeHash].tokenAddress
             );
         }
 
@@ -597,7 +593,7 @@ contract HeymateOffer {
         releaseAmount = _releaseAmount;
 
         emit CancelledByConsumer(_tradeHash);
-        transferMinusFees(_consumer, _releaseAmount, _fee, offers[_tradeHash].currencyId);
+        transferMinusFees(_consumer, _releaseAmount, _fee, offers[_tradeHash].tokenAddress);
         delete offers[_tradeHash];
         return true;
     }
@@ -610,7 +606,7 @@ contract HeymateOffer {
        
             (Plan memory _plan, bytes32 _planHash)= getPlanAndHash(_planID, _serviceProvider, _consumer);
              if (_plan.exists == true) {
-                      transferAmount(_serviceProvider, plans[_planHash].amountPerSession, plans[_planHash].currencyId);
+                      transferAmount(_serviceProvider, plans[_planHash].amountPerSession, plans[_planHash].tokenAddress);
                 }
         return true;
     }
@@ -726,7 +722,7 @@ contract HeymateOffer {
         address payable _to,
         uint256 _amount,
         uint16 _fee,
-        uint32 _currencyId
+        address _tokenAddress
     ) private {
         uint256 _totalFees = ((_amount * _fee) / 10000);
         totalFees = _totalFees;
@@ -736,7 +732,7 @@ contract HeymateOffer {
         transferAmount(
               _to,
               (_amount - _totalFees),
-              _currencyId
+              _tokenAddress
               );
     }
 
