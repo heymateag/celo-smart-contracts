@@ -1,6 +1,4 @@
-// SPDX-License-Identifier: HEYMATE 19th July 2021
-// Referrer issue updated. Line 247, 293
-
+// SPDX-License-Identifier: HEYMATE
 pragma solidity ^0.7.4;
 
 /**
@@ -70,6 +68,7 @@ contract HeymateOffer {
         uint32 delayHour;
         uint32 delayHourPercen;
         uint256 rewardValue;
+        address tokenAddress;
     }
 
     struct offerInfo {
@@ -86,6 +85,7 @@ contract HeymateOffer {
         uint subScriptionType;
         uint totalBundles;
         uint availableBundles;
+        address tokenAddress;
     }
  
     // Mapping of active trades. Key is a hash of the trade data
@@ -102,12 +102,14 @@ contract HeymateOffer {
     owner = msg.sender;
     }
 
-    
-    // Celo deployed contract address for Escrow and StableToken
-    address stableTokenAddress = 0x765DE816845861e75A25fCA122bb6898B8B1282a;
+    // Celo deployed contract address for Escrow and StableTokens
+    address cUSDTokenAddress = 0x765de816845861e75a25fca122bb6898b8b1282a;
+    address cEURTokenAddress = 0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73;
     address celoEscrowContractAddress = 0xf4Fa51472Ca8d72AF678975D9F8795A504E7ada5;
+
     
      // Escrow transfer for non-heymate users.
+     // To do
     function escrowTransfer(
         bytes32 identifier,
         address payable token,
@@ -129,7 +131,6 @@ contract HeymateOffer {
             );
     }
   
-
     // Get the offer details
     function getOfferAndHash(
         bytes16 _tradeID,
@@ -154,17 +155,20 @@ contract HeymateOffer {
 
 
     // Celo contract to transfer tokens
-     function transferAmount(address  to, uint256 value) public returns (bool) {
-        celoStableTokenContract obj = celoStableTokenContract(stableTokenAddress);
-        return obj.transfer(
+     function transferAmount(address  to, uint256 value, address tokenAddress) public returns (bool) {
+        celoStableTokenContract obj = celoStableTokenContract(tokenAddress);
+              return obj.transfer(
                 to,
                 value
             );
+       
     }
 
     // Celo contract to approve
     function approveTransfer(address spender, uint256 value) public virtual returns (bool) {
-        celoStableTokenContract obj = celoStableTokenContract(stableTokenAddress);
+        //To do
+        // celoStableTokenContract obj = celoStableTokenContract(stableTokenAddress);
+        celoStableTokenContract obj = celoStableTokenContract(0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1);
         return obj.approve(spender,value);
     }
     
@@ -172,12 +176,15 @@ contract HeymateOffer {
     // Creating Plans 
 
     /**
-    config[0] - _amountPerSession
-    config[1] - _subScriptionType     // 1- Monthly , 2 - Yearly
-    config[2] - _totalBundles
-    config[3] - _referralConfigId 
-    confid[4] - _referrerPercen  
-     */
+    config[0]       - _amountPerSession
+    config[1]       - _subScriptionType     // 1- Monthly , 2 - Yearly
+    config[2]       - _totalBundles
+    config[3]       - _referralConfigId 
+    config[4]       - _referrerPercen  
+    userAddress[0]  - Service Provider address
+    userAddress[1]  - Consumer address
+    userAddress[2]  - Stable token address
+         */
      
     
     function createPlan(
@@ -193,7 +200,14 @@ contract HeymateOffer {
         bytes32 _msgHash =  keccak256(abi.encodePacked(userAddress[0], config[0],config[1]));
         bytes32 ethSignedMessageHash = prefixed(_msgHash);
         // require(recoverSigner(ethSignedMessageHash, signature) == userAddress[0], "Wrong signature");
-        plans[_planHash] = Plan(true, _planType, config[0] , config[1],  config[2] ,  config[2]);
+        plans[_planHash] = Plan(
+            true,           // exists
+            _planType,      
+            config[0] ,     //amountPerSession
+            config[1],      // subScriptionType
+            config[2] ,     // totalBundles
+            config[2],      // availableBundles
+            userAddress[2]);     // currency token address
         planHash = _planHash;
         emit CreatedPlan(_planHash);
         
@@ -204,6 +218,7 @@ contract HeymateOffer {
     /**
      * userAddress[0]       - Service provider
      * userAddress[1]       - Consumer
+     * userAddress[2]       - Stable token address
      * config[0]            - _cancelHourVar1
      * config[1]            - _cancelHourVar1Percen
      * config[2]            - _cancelHourVar2
@@ -212,7 +227,6 @@ contract HeymateOffer {
      * config[5]            - _delayHourPercen
      * config[6]            - _referralConfigId , 1 - FirstInteraction , 2 -> Last interaction . 3-> Last No-Direct click 4 -> Linear
      * config[7]            - _referralConfigPercen
-     *
      *
      **/
 
@@ -270,14 +284,17 @@ contract HeymateOffer {
                 }
         }
         
+        // Cancellation variable 1 is added to the trade starting time to calculate the cancellation period time. And  converted from minutes to seconds 
         if (config[0] > 0) {
             config[0] = tradeStartTime + config[0] * 60;
         }
 
+         // Cancellation variable 1 is added to the cancellation variable 2 to calculate the cancellation period time. And  converted from minutes to seconds
         if (config[2] > 0) {
             config[2] = config[0] + config[2] * 60;
         }
 
+        // Delay period is converted from minutes to seconds
         if (config[4] > 0) {
             config[4] = config[4] * 60;
         }
@@ -296,13 +313,15 @@ contract HeymateOffer {
         }
         
        // Distributing the referral bonus for the heymate users
+       // @param config[8] - currencyID
         if(activeReferrers.length > 0){
             for (uint i=0; i< activeReferrers.length ; i++){
-                 transferAmount(activeReferrers[i], _rewardPerReferrer);
+                 transferAmount(activeReferrers[i], _rewardPerReferrer, userAddress[2]);
             }
         }
         
-        // Creating escrow payment for the non-heymate users in celo
+        // Creating escrow payment for the non-heymate users in celo.
+        // This needs to be updated w.r.t currencyID
         if(newReferrers.length > 0){
             approveTransfer(celoEscrowContractAddress, _rewardPerReferrer * newReferrers.length );
              for (uint i=0; i< newReferrers.length ; i++){
@@ -316,19 +335,20 @@ contract HeymateOffer {
         }
         
         offers[_tradeHash] = Offer(
-            true,
-            0,
-            0,
-            0,
-            _slotTime,
+            true,               // exists   
+            0,                  // serviceStartTime
+            0,                  // initialDepositValue
+            0,                  // remainingValue
+            _slotTime,          
             tradeStartTime,
-            config[0],
-            config[1],
-            config[2],
-            config[3],
-            config[4],
-            config[5],
-            _rewardValue
+            config[0],          // cancelVar1 
+            config[1],          // cancelVar1 percentage
+            config[2],          // cancelVar2
+            config[3],          // cancelVar2 percentage
+            config[4],          // delayHour
+            config[5],          // delayHour percentage
+            _rewardValue,       
+            userAddress[2]           // currency token address 
         );
 
         tradeHash = _tradeHash;
@@ -345,7 +365,8 @@ contract HeymateOffer {
            
              transferAmount(
               userAddress[0],
-              offers[_tradeHash].initialDepositValue
+              offers[_tradeHash].initialDepositValue,
+              offers[_tradeHash].tokenAddress
               );
         }
 
@@ -464,7 +485,6 @@ contract HeymateOffer {
             );
 
         if (!_offer.exists) return false;
-
         uint256 _delayCompensationValue = 0;
         if (
             offers[_tradeHash].serviceStartTime >
@@ -473,7 +493,7 @@ contract HeymateOffer {
             _delayCompensationValue = ((_amount *
                 offers[_tradeHash].delayHourPercen) / 100);
             delayCompensation = _delayCompensationValue;
-            transferMinusFees(_consumer, _delayCompensationValue, _fee);
+            transferMinusFees(_consumer, _delayCompensationValue, _fee, offers[_tradeHash].tokenAddress);
         }
 
         uint256 _releaseAmount =
@@ -481,7 +501,7 @@ contract HeymateOffer {
         releaseAmount = _releaseAmount;
 
         emit Released(_tradeHash);
-        transferMinusFees(_serviceProvider, _releaseAmount, _fee);
+        transferMinusFees(_serviceProvider, _releaseAmount, _fee, offers[_tradeHash].tokenAddress);
         delete offers[_tradeHash];
         return true;
     }
@@ -506,7 +526,7 @@ contract HeymateOffer {
         if (!_offer.exists) return false;
         emit CancelledByServiceProvider(_tradeHash);
         releaseAmount = offers[_tradeHash].remainingValue;
-        transferMinusFees(_consumer, offers[_tradeHash].remainingValue, _fee);
+        transferMinusFees(_consumer, offers[_tradeHash].remainingValue, _fee, offers[_tradeHash].tokenAddress);
         delete offers[_tradeHash];
         return true;
     }
@@ -543,7 +563,8 @@ contract HeymateOffer {
             transferMinusFees(
                 _serviceProvider,
                 _cancellationValueDeposit,
-                _fee
+                _fee,
+                offers[_tradeHash].tokenAddress
             );
         } else if (
             cancelTime > offers[_tradeHash].cancelHourVar1 &&
@@ -557,7 +578,8 @@ contract HeymateOffer {
             transferMinusFees(
                 _serviceProvider,
                 _cancellationValueDeposit,
-                _fee
+                _fee,
+                offers[_tradeHash].tokenAddress
             );
         }
 
@@ -566,7 +588,7 @@ contract HeymateOffer {
         releaseAmount = _releaseAmount;
 
         emit CancelledByConsumer(_tradeHash);
-        transferMinusFees(_consumer, _releaseAmount, _fee);
+        transferMinusFees(_consumer, _releaseAmount, _fee, offers[_tradeHash].tokenAddress);
         delete offers[_tradeHash];
         return true;
     }
@@ -579,7 +601,7 @@ contract HeymateOffer {
        
             (Plan memory _plan, bytes32 _planHash)= getPlanAndHash(_planID, _serviceProvider, _consumer);
              if (_plan.exists == true) {
-                      transferAmount(_serviceProvider, plans[_planHash].amountPerSession);
+                      transferAmount(_serviceProvider, plans[_planHash].amountPerSession, plans[_planHash].tokenAddress);
                 }
         return true;
     }
@@ -694,16 +716,18 @@ contract HeymateOffer {
     function transferMinusFees(
         address payable _to,
         uint256 _amount,
-        uint16 _fee
+        uint16 _fee,
+        address _tokenAddress
     ) private {
         uint256 _totalFees = ((_amount * _fee) / 10000);
         totalFees = _totalFees;
         if (_amount - _totalFees > _amount) return; // Prevent underflow
         feesAvailableForWithdraw += _totalFees;
-        // _to.transfer(_amount - _totalFees);
+   // _to.transfer(_amount - _totalFees);
         transferAmount(
               _to,
-              (_amount - _totalFees)
+              (_amount - _totalFees),
+              _tokenAddress
               );
     }
 

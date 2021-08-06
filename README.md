@@ -12,3 +12,12 @@
 
 ---
 
+**Steps to deploy the smart contract using nodejs script**
+
+1. truffle compile
+
+2. node celo_deploy.js
+
+*Documention: https://docs.celo.org/developer-guide/start/hello-contract-remote-node*
+
+---
