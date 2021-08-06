@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: HEYMATE
+
+// Deployed on 6th August 2021 - Currency updated and merged with dev branch.
+// Contract address : 0xe71eEb0791A6F3E4705759fcD0bB95d15A5A6be1
 pragma solidity ^0.7.4;
 
 /**
@@ -103,8 +106,8 @@ contract HeymateOffer {
     }
 
     // Celo deployed contract address for Escrow and StableTokens
-    address cUSDTokenAddress = 0x765de816845861e75a25fca122bb6898b8b1282a;
-    address cEURTokenAddress = 0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73;
+    address cUSDTokenAddress = 0x765DE816845861e75A25fCA122bb6898B8B1282a;
+    address cEURTokenAddress = 0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73;
     address celoEscrowContractAddress = 0xf4Fa51472Ca8d72AF678975D9F8795A504E7ada5;
 
     
@@ -168,7 +171,7 @@ contract HeymateOffer {
     function approveTransfer(address spender, uint256 value) public virtual returns (bool) {
         //To do
         // celoStableTokenContract obj = celoStableTokenContract(stableTokenAddress);
-        celoStableTokenContract obj = celoStableTokenContract(0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1);
+        celoStableTokenContract obj = celoStableTokenContract(0x765DE816845861e75A25fCA122bb6898B8B1282a);
         return obj.approve(spender,value);
     }
     
@@ -313,7 +316,7 @@ contract HeymateOffer {
         }
         
        // Distributing the referral bonus for the heymate users
-       // @param config[8] - currencyID
+
         if(activeReferrers.length > 0){
             for (uint i=0; i< activeReferrers.length ; i++){
                  transferAmount(activeReferrers[i], _rewardPerReferrer, userAddress[2]);
