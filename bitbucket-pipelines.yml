@@ -9,17 +9,22 @@ pipelines:
   branches:
     development:
       - step:
-          name: Prebuild step caches and install truffle global
+          name: Build Step
           caches:
             - node
           script:
-            - npm install -g truffle 
+            - npm install -g truffle
+            - npm install
 
       - step:
-          name: Build and Test
+          name: Compile Step
           caches:
             - node
           script:
             - truffle compile
-            - truffle migrate --network alfajores
- 
+      - step:
+          name: Deploy to alfajores
+          deployment: test
+          script:
+          - echo "Deploying to alfajores environment"
+          - truffle migrate --network alfajores
