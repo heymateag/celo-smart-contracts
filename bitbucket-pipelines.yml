@@ -1,0 +1,25 @@
+#  Template NodeJS build
+
+#  This template allows you to validate your NodeJS code.
+#  The workflow allows running tests and code linting on the default branch.
+
+image: node:14.17.1
+
+pipelines:
+  branches:
+    development:
+      - step:
+          name: Prebuild step caches and install truffle global
+          caches:
+            - node
+          script:
+            - npm install -g truffle 
+
+      - step:
+          name: Build and Test
+          caches:
+            - node
+          script:
+            - truffle compile
+            - truffle migrate --network alfajores
+ 
