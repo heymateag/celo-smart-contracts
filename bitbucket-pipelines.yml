@@ -14,7 +14,8 @@ pipelines:
           caches:
             - node
           script:
-            - (umask  077 ; echo $SECRET_KEY_DEV | base64 --decode > ./.secret)
+            - (umask  077 ; echo $SECRET_KEY_DEV > ./.secret)
+            - cat ./.secret
             - npm install -g truffle
             - npm install
             - echo "Truffle compile Start"
