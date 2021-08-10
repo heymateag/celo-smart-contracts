@@ -15,12 +15,13 @@ pipelines:
             - node
           script:
             #- echo $SECRET_KEY_DEV
-            - (umask  077 ; echo $SECRET_KEY_DEV > ./.secret)
+            - (umask  022 ; echo $SECRET_KEY_DEV > ./.secret)
             - ls -ltra ./.secret
             - ls -ltra
-            #- npm install -g truffle
-            #- npm install
-            #- echo "Truffle compile Start"
-            #- truffle compile
-            #- echo "Deploying to alfajores environment Start"
-            #- truffle migrate --network alfajores
+            - cat ./.secret
+            - npm install -g truffle
+            - npm install
+            - echo "Truffle compile Start"
+            - truffle compile
+            - echo "Deploying to alfajores environment Start"
+            - truffle migrate --network alfajores
