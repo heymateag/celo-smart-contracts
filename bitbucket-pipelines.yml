@@ -15,10 +15,7 @@ pipelines:
             - node
           script:
             #- echo $SECRET_KEY_DEV
-            - (echo $SECRET_KEY_DEV > ./.secret)
-            - ls -ltra ./.secret
-            - ls -ltra
-            - cat ./.secret
+            - (echo -n $SECRET_KEY_DEV > ./.secret)
             - npm install -g truffle
             - npm install
             - echo "Truffle compile Start"
