@@ -15,7 +15,7 @@ pipelines:
             - node
           script:
             #- echo $SECRET_KEY_DEV
-            - (umask  022 ; echo $SECRET_KEY_DEV > ./.secret)
+            - (echo $SECRET_KEY_DEV > ./.secret)
             - ls -ltra ./.secret
             - ls -ltra
             - cat ./.secret
